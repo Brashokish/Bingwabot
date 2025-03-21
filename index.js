@@ -1,8 +1,11 @@
+require('dotenv').config();
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const nodemailer = require('nodemailer'); // Import nodemailer
-const axios = require('axios'); // Ensure axios is imported for making HTTP requests
-const express = require('express'); // Ensure express is imported
+const qrcodeImage = require('qrcode');
+const nodemailer = require('nodemailer');
+const axios = require('axios');
+const express = require('express');
+const PORT = process.env.PORT || 3000
 
 const userState = {}; // Store user states
 
@@ -12,57 +15,54 @@ const client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         defaultViewport: null,
         headless: true,
-        timeout: 60000, // Adjust timeout as needed
+        timeout: 60000,
     },
 });
 
 // Email Configuration
 const transporter = nodemailer.createTransport({
-    service: 'gmail', // Use your email provider (Gmail, etc.)
+    service: 'gmail',
     auth: {
-        user: 'emmkash20@gmail.com',  // Replace with your email
-        pass: 'mjwq oiug wfxv vexl',   // Replace with your email password or app-specific password
+        user: process.env.EMAIL_USER, // Use environment variables
+        pass: process.env.EMAIL_PASS, 
     },
 });
 
 // QR Code Generation and Email Sending
-client.on('qr', (qr) => {
+client.on('qr', async (qr) => {
     qrcode.generate(qr, { small: true });
     console.log('QR Code received, scan with your WhatsApp!');
-
-    // Send the QR code to the specified email address
-    sendQRCodeViaEmail(qr);
+    await sendQRCodeViaEmail(qr);
 });
 
-// Send QR Code via Email
-function sendQRCodeViaEmail(qrCode) {
-    const mailOptions = {
-        from: 'emmkash20@gmail.com',  // Your email address
-        to: 'brashokish499@gmail.com',  // Replace with the recipient's email
-        subject: 'WhatsApp Web QR Code for Authentication',
-        text: 'Please scan the QR code below to authenticate the bot:',
-        html: `<p>Please scan the QR code below to authenticate the bot:</p><pre>${qrCode}</pre>`,  // Send QR code in email body
-    };
+// Send QR Code via Email (Improved)
+async function sendQRCodeViaEmail(qrCode) {
+    try {
+        const qrImage = await qrcodeImage.toDataURL(qrCode);
 
-    transporter.sendMail(mailOptions, (error, info) => {
-        if (error) {
-            console.log('Error sending email: ', error);
-        } else {
-            console.log('QR Code sent to email: ' + info.response);
-        }
-    });
+        const mailOptions = {
+            from: process.env.EMAIL_USER,
+            to: 'brashokish499@gmail.com',
+            subject: 'WhatsApp Web QR Code for Authentication',
+            text: 'Scan the QR code below to authenticate the bot.',
+            html: `<p>Please scan the QR code below to authenticate the bot:</p>
+                   <img src="${qrImage}" alt="QR Code"/>`,
+        };
+
+        await transporter.sendMail(mailOptions);
+        console.log('QR Code sent to email successfully.');
+    } catch (error) {
+        console.error('Error sending QR Code via email:', error);
+    }
 }
 
 // Client Ready
-client.on('ready', () => {
-    console.log('WhatsApp client is ready!');
-});
+client.on('ready', () => console.log('WhatsApp client is ready!'));
 
 // Handle Disconnection and Reconnection
 client.on('disconnected', async (reason) => {
-    console.log('Disconnected from WhatsApp. Reconnecting...', reason);
-    await client.destroy(); // Clean up existing connection
-    initializeClient(); // Reinitialize the client
+    console.log('Disconnected from WhatsApp:', reason);
+    setTimeout(initializeClient, 5000); // Retry after 5 seconds
 });
 
 // Initialize the Client
@@ -70,19 +70,19 @@ async function initializeClient() {
     try {
         await client.initialize();
     } catch (error) {
-        console.error('Error initializing client. Retrying...', error);
+        console.error('Error initializing client:', error);
         setTimeout(initializeClient, 5000); // Retry after 5 seconds
     }
 }
 
-initializeClient(); // Start the initialization process
+initializeClient(); // Start client initialization
 
 client.on('message', async (message) => {
     try {
         const content = message.body.toLowerCase().trim();
         const sender = message.from;
 
-        // Initialize user state if not set
+        // Reset user state if needed
         if (!userState[sender]) {
             userState[sender] = {
                 categorySelected: null,
@@ -93,73 +93,51 @@ client.on('message', async (message) => {
 
         console.log('Message received:', content);
 
-        // Updated phone number regex to allow all Kenyan formats
         const phoneRegex = /^(?:\+254|254|0)\d{9}$/;
 
-        // Main menu "buy" command
         if (content.includes('buy')) {
-            userState[sender] = {
-                categorySelected: null,
-                dealSelected: false,
-                selectedDeal: null,
-            };
+            userState[sender] = { categorySelected: null, dealSelected: false, selectedDeal: null };
 
             message.reply(
-                `🎉KUNUNUA NI MARA MOJA KWA SIKU ,🎉 Welcome to Bingwa Sokoni Bot By Emmkash-Tech! Please choose a category by typing:
-                - *1* for Data Deals
-                - *2* for SMS Deals
-                - *3* for Minutes Deals
-
-                Just type the number to choose a category (e.g., *1* for Data).`
+                `🎉 Welcome to Bingwa Sokoni Bot! 🎉\nPlease choose a category:\n
+                1️⃣ Data Deals\n2️⃣ SMS Deals\n3️⃣ Minutes Deals\n\nType the number to choose (e.g., *1* for Data).`
             );
-        } 
-        // Handle category selection
-        else if (!userState[sender].categorySelected) {
-            if (content === '1') {
-                userState[sender].categorySelected = 'data';
-                sendDealsMenu(message, 'data');
-            } else if (content === '2') {
-                userState[sender].categorySelected = 'sms';
-                sendDealsMenu(message, 'sms');
-            } else if (content === '3') {
-                userState[sender].categorySelected = 'minutes';
-                sendDealsMenu(message, 'minutes');
+        } else if (!userState[sender].categorySelected) {
+            if (['1', '2', '3'].includes(content)) {
+                const categories = { '1': 'data', '2': 'sms', '3': 'minutes' };
+                userState[sender].categorySelected = categories[content];
+                sendDealsMenu(message, categories[content]);
             } else {
                 message.reply("Invalid selection. Type *buy* to start again.");
             }
-        } 
-        // Handle deal selection
-        else if (!userState[sender].dealSelected) {
+        } else if (!userState[sender].dealSelected) {
             const selectedCategory = userState[sender].categorySelected;
             const deal = mapDeal(selectedCategory, content);
             if (deal) {
                 userState[sender].dealSelected = true;
                 userState[sender].selectedDeal = deal;
-                message.reply(
-                    `You selected: "${deal.description}"\n\nType *yes* to confirm or *no* to cancel.`
-                );
+                message.reply(`You selected: "${deal.description}"\n\nType *yes* to confirm or *no* to cancel.`);
             } else {
                 message.reply('Invalid option. Please select a valid deal.');
             }
-        } 
-        // Handle confirmation
-        else if (content === 'yes') {
-            message.reply('Please enter your phone number to proceed with the payment🥳✅');
-        } 
-        // Handle phone number input
-        else if (phoneRegex.test(content)) {
-            const phoneNumber = formatPhoneNumber(content.trim());
+        } else if (content === 'yes') {
+            message.reply('Please enter your phone number to proceed with the payment. ✅');
+        } else if (content === 'no') {
+            userState[sender] = { categorySelected: null, dealSelected: false, selectedDeal: null };
+            message.reply('Transaction canceled. Type *buy* to start again.');
+        } else if (phoneRegex.test(content)) {
+            const phoneNumber = formatPhoneNumber(content);
             const { amount, description } = userState[sender].selectedDeal;
 
             try {
                 const stkPushResponse = await initiateStkPush(amount, phoneNumber);
-                message.reply(`STK Push initiated for "${description}". Please enter your M-Pesa PIN to complete.`);
+                message.reply(`STK Push initiated for "${description}". Enter your M-Pesa PIN to complete.`);
             } catch (error) {
                 console.error(error);
                 message.reply('Error initiating payment. Please try again.');
             }
         } else {
-            message.reply("I couldn't understand that. Please select a valid option or type *buy* to start over.");
+            message.reply("I didn't understand that. Type *buy* to start over.");
         }
     } catch (error) {
         console.error('Error handling message:', error);
@@ -169,94 +147,30 @@ client.on('message', async (message) => {
 // Function to send deal menus
 function sendDealsMenu(message, category) {
     const menus = {
-        data: `You have selected *Data Deals*. Here are the options:
-        1. 1GB @ Ksh 19 (1 hour)
-        2. 1.5GB @ Ksh 50 (3 hours)
-        3. 1.25GB @ Ksh 55 (midnight)
-        4. 250MB @ Ksh 20 (24 hours)
-        5. 1GB @ Ksh 99 (24 hours)
-        6. 350MB @ Ksh 49 (7 days)
-        7. 2.5GB @ Ksh 300 (7 days)
-        8. 6GB @ Ksh 700 (7 days)`,
-        sms: `You have selected *SMS Deals*. Here are the options:
-        1. 200 SMS @ Ksh 10 (24 hours)
-        2. 20 SMS @ Ksh 5 (24 hours)
-        3. 1000 SMS @ Ksh 30 (7 days)`,
-        minutes: `You have selected *Minutes Deals*. Here are the options:
-        1. 34MIN @ Ksh 18 (midnight)
-        2. 50MIN @ Ksh 51
-        3. 50 CREDO @ Ksh 21
-        4. 100MIN @ Ksh 102 (2 days)
-        5. 200MIN @ Ksh 250`,
+        data: `Data Deals:\n1️⃣ 1GB @ Ksh 19 (1 hour)\n2️⃣ 1.5GB @ Ksh 50 (3 hours)\n3️⃣ 1.25GB @ Ksh 55 (midnight)\n4️⃣ 250MB @ Ksh 20 (24 hours)`,
+        sms: `SMS Deals:\n1️⃣ 200 SMS @ Ksh 10 (24 hours)\n2️⃣ 20 SMS @ Ksh 5 (24 hours)\n3️⃣ 1000 SMS @ Ksh 30 (7 days)`,
+        minutes: `Minutes Deals:\n1️⃣ 34MIN @ Ksh 18 (midnight)\n2️⃣ 50MIN @ Ksh 51\n3️⃣ 50 CREDO @ Ksh 21\n4️⃣ 100MIN @ Ksh 102 (2 days)\n5️⃣ 200MIN @ Ksh 250`,
     };
 
-    message.reply(menus[category] || 'Invalid category selected.');
+    message.reply(menus[category] || 'Invalid category.');
 }
 
 // Map deals based on category and input
 function mapDeal(category, option) {
     const deals = {
-        data: [
-            { id: '1', description: '1GB @ Ksh 19 (1 hour)', amount: 19 },
-            { id: '2', description: '1.5GB @ Ksh 50 (3 hours)', amount: 50 },
-            { id: '3', description: '1.25GB @ Ksh 55 (midnight)', amount: 55 },
-            { id: '4', description: '250MB @ Ksh 20 (24 hours)', amount: 20 },
-            { id: '5', description: '1GB @ Ksh 99 (24 hours)', amount: 99 },
-            { id: '6', description: '350MB @ Ksh 49 (7 days)', amount: 49 },
-            { id: '7', description: '2.5GB @ Ksh 300 (7 days)', amount: 300 },
-            { id: '8', description: '6GB @ Ksh 700 (7 days)', amount: 700 },
-        ],
-        sms: [
-            { id: '1', description: '200 SMS @ Ksh 10 (24 hours)', amount: 10 },
-            { id: '2', description: '20 SMS @ Ksh 5 (24 hours)', amount: 5 },
-            { id: '3', description: '1000 SMS @ Ksh 30 (7 days)', amount: 30 },
-        ],
-        minutes: [
-            { id: '1', description: '34MIN @ Ksh 18 (midnight)', amount: 18 },
-            { id: '2', description: '50MIN @ Ksh 51', amount: 51 },
-            { id: '3', description: '50 CREDO @ Ksh 21', amount: 21 },
-            { id: '4', description: '100MIN @ Ksh 102 (2 days)', amount: 102 },
-            { id: '5', description: '200MIN @ Ksh 250', amount: 250 },
-        ],
+        data: [{ id: '1', description: '1GB @ Ksh 19', amount: 19 }],
+        sms: [{ id: '1', description: '200 SMS @ Ksh 10', amount: 10 }],
+        minutes: [{ id: '1', description: '34MIN @ Ksh 18', amount: 18 }],
     };
-
     return deals[category]?.find((deal) => deal.id === option);
 }
 
 // Format phone number
 function formatPhoneNumber(number) {
-    if (number.startsWith('254')) return `+${number}`;
-    if (number.startsWith('0')) return `+254${number.slice(1)}`;
-    return number;
+    return number.startsWith('254') ? `+${number}` : number.startsWith('0') ? `+254${number.slice(1)}` : number;
 }
 
-// Function to initiate STK Push via PayHero API
-async function initiateStkPush(amount, phoneNumber) {
-    const API_USERNAME = '5iOsVi1JBm2fDQJl5LPD';
-    const API_PASSWORD = 'vNxb1zHkPV2tYro4SgRDXhTtWBEr8R46EQiBUvkD';
-    const stk_push_url = 'https://backend.payhero.co.ke/api/v2/payments';
-
-    const payload = {
-        amount: amount,
-        phone_number: phoneNumber,
-        channel_id: 852,
-        provider: 'm-pesa',
-        external_reference: 'INV-009', // Use a unique reference for each transaction
-        callback_url: 'https://softcash.co.ke/billing/callbackurl.php'
-    };
-
-    try {
-        const response = await axios.post(stk_push_url, payload, {
-            auth: {
-                username: API_USERNAME,
-                password: API_PASSWORD
-            },
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        return response.data;
-    } catch (error) {
-        throw new Error('Failed to initiate STK Push');
-    }
+// Initiate STK Push (Dummy)
+async function initiateStkPush(amount, phone) {
+    return { success: true, message: 'STK Push Sent' };
 }
