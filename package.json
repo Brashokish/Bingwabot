@@ -14,7 +14,7 @@
     "express": "^4.18.2"
   },
   "engines": {
-    "node": "16.x"
+    "node": "18.x"
   },
   "author": "Emmkash Technologies",
   "license": "MIT"
