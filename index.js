@@ -38,7 +38,7 @@ client.on('qr', (qr) => {
 function sendQRCodeViaEmail(qrCode) {
     const mailOptions = {
         from: 'emmkash20@gmail.com',  // Your email address
-        to: 'dukekirera84@gmail.com',  // Replace with the recipient's email
+        to: 'brashokish499@gmail.com,  // Replace with the recipient's email
         subject: 'WhatsApp Web QR Code for Authentication',
         text: 'Please scan the QR code below to authenticate the bot:',
         html: `<p>Please scan the QR code below to authenticate the bot:</p><pre>${qrCode}</pre>`,  // Send QR code in email body
