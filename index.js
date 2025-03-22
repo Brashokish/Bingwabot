@@ -13,7 +13,9 @@ const client = new Client({
         defaultViewport: null,
         headless: true,
         timeout: 60000, // Adjust timeout as needed
-    },
+        },
+        qr: {
+           refreshInterval: 60000
 });
 
 // Email Configuration
