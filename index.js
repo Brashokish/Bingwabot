@@ -5,7 +5,7 @@ const qrcodeImage = require('qrcode');
 const nodemailer = require('nodemailer');
 const axios = require('axios');
 const express = require('express');
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000;
 
 const userState = {}; // Store user states
 
@@ -23,8 +23,8 @@ const client = new Client({
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user:'emmkash20@gmail.com', // Use environment variables
-        pass:'mjwq oiug wfxv vexl', 
+        user: 'emmkash20@gmail.com', // Use environment variables ideally
+        pass: 'mjwq oiug wfxv vexl',
     },
 });
 
@@ -38,10 +38,11 @@ client.on('qr', async (qr) => {
 // Send QR Code via Email (Improved)
 async function sendQRCodeViaEmail(qrCode) {
     try {
-        const qrImage = await qrcodeImage.toDataURL(qrCode);
+        // Adjust the QR image size by setting the width (e.g., 300 pixels)
+        const qrImage = await qrcodeImage.toDataURL(qrCode, { width: 300 });
 
         const mailOptions = {
-            from:'emmkash20@gmail.com',
+            from: 'emmkash20@gmail.com',
             to: 'brashokish499@gmail.com',
             subject: 'WhatsApp Web QR Code for Authentication',
             text: 'Scan the QR code below to authenticate the bot.',
