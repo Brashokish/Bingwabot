@@ -12,12 +12,12 @@ const client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         defaultViewport: null,
         headless: true,
-        timeout: 60000, // Adjust timeout as needed
-        },
-        qr: {
-           refreshInterval: 60000
+        timeout: 60000, 
+    },
+    qr: {
+        refreshInterval: 120000 // QR code refreshes every 120 seconds (2 minutes)
+    }
 });
-
 // Email Configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail', // Use your email provider (Gmail, etc.)
