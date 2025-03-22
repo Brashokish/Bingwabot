@@ -21,10 +21,16 @@ const userState = {}; // Store user states
 const client = new Client({
     authStrategy: new LocalAuth(),
     puppeteer: {
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process'  // Add this line
+        ],
         defaultViewport: null,
-        headless: true,
-        timeout: 60000, 
+        headless: 'new',  // Use new headless mode
+        timeout: 60000,
     },
     qr: {
         refreshInterval: 120000 // QR code refreshes every 120 seconds (2 minutes)
