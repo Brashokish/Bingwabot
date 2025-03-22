@@ -12,8 +12,11 @@ const client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         defaultViewport: null,
         headless: true,
-        timeout: 60000, // Adjust timeout as needed
+        timeout: 60000, 
     },
+    qr: {
+        refreshInterval: 120000 // QR code refreshes every 120 seconds (2 minutes)
+    }
 });
 
 // Email Configuration
