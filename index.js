@@ -2,7 +2,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const nodemailer = require('nodemailer'); // Import nodemailer
 const axios = require('axios'); // Ensure axios is imported for making HTTP requests
-const express = require('express'); // Ensure express is imported
+const express = require('express');// Ensure express is imported
+const app = express();
 const PORT = process.env.PORT || 3000
 const userState = {}; // Store user states
 
