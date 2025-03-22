@@ -14,6 +14,9 @@ const client = new Client({
         headless: true,
         timeout: 60000, // Adjust timeout as needed
     },
+   qr: {
+        refreshInterval: 120000 // QR code refreshes every 120 seconds (2 minutes)
+    }
 });
 
 // Email Configuration
