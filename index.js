@@ -23,8 +23,8 @@ const client = new Client({
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.EMAIL_USER, // Use environment variables
-        pass: process.env.EMAIL_PASS, 
+        user:'emmkash20@gmail.com', // Use environment variables
+        pass:'mjwq oiug wfxv vexl', 
     },
 });
 
@@ -41,7 +41,7 @@ async function sendQRCodeViaEmail(qrCode) {
         const qrImage = await qrcodeImage.toDataURL(qrCode);
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from:'emmkash20@gmail.com',
             to: 'brashokish499@gmail.com',
             subject: 'WhatsApp Web QR Code for Authentication',
             text: 'Scan the QR code below to authenticate the bot.',
