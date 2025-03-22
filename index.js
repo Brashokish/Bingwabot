@@ -1,10 +1,21 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
-const nodemailer = require('nodemailer'); // Import nodemailer
-const axios = require('axios'); // Ensure axios is imported for making HTTP requests
-const express = require('express');// Ensure express is imported
+const nodemailer = require('nodemailer');
+const axios = require('axios');
+const express = require('express');
+
+// Initialize Express server
 const app = express();
-const PORT = process.env.PORT || 3000
+const port = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('WhatsApp Bot is running!');
+});
+
+app.listen(port, () => {
+    console.log(`Server running on port ${port}`);
+});
+
 const userState = {}; // Store user states
 
 const client = new Client({
@@ -263,8 +274,3 @@ async function initiateStkPush(amount, phoneNumber) {
         throw new Error('Failed to initiate STK Push');
     }
 }
-
-// Start the Express server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`WhatsApp Bot listening at http://0.0.0.0:${PORT}`);
-});
