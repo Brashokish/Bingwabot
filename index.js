@@ -262,3 +262,8 @@ async function initiateStkPush(amount, phoneNumber) {
         throw new Error('Failed to initiate STK Push');
     }
 }
+
+// Start the Express server
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`WhatsApp Bot listening at http://0.0.0.0:${PORT}`);
+});
