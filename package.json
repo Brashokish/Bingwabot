@@ -4,19 +4,20 @@
   "description": "A WhatsApp bot for Bingwa Sokoni using WhatsApp Web API, Nodemailer, and PayHero for STK push.",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "heroku-postbuild": "npm install --production"  // Optional: for Heroku-specific build step
   },
   "dependencies": {
     "axios": "^1.6.0",
     "nodemailer": "^6.9.1",
     "qrcode-terminal": "^0.12.0",
     "whatsapp-web.js": "^1.18.0",
-    "express": "^4.18.2"
+    "express": "^4.18.2",
+    "puppeteer": "^20.0.0"  // Add Puppeteer dependency
   },
   "engines": {
     "node": "18.x"
   },
   "author": "Emmkash Technologies",
-  "license": "MIT",
-  "heroku-postbuild": "apt-get update && apt-get install -y libatk1.0-0 libcups2 libx11-xcb1 libxcomposite1 libxcursor1 libxdamage1 libxi6 libxrandr2 libxss1 libxtst6 libnss3"
+  "license": "MIT"
 }
