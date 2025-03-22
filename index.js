@@ -2,9 +2,8 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const nodemailer = require('nodemailer'); // Import nodemailer
 const axios = require('axios'); // Ensure axios is imported for making HTTP requests
-const express = require('express');// Ensure express is imported
-const app = express();
-const PORT = process.env.PORT || 3000
+const express = require('express'); // Ensure express is imported
+
 const userState = {}; // Store user states
 
 const client = new Client({
@@ -13,12 +12,10 @@ const client = new Client({
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         defaultViewport: null,
         headless: true,
-        timeout: 60000, 
+        timeout: 60000, // Adjust timeout as needed
     },
-    qr: {
-        refreshInterval: 120000 // QR code refreshes every 120 seconds (2 minutes)
-    }
 });
+
 // Email Configuration
 const transporter = nodemailer.createTransport({
     service: 'gmail', // Use your email provider (Gmail, etc.)
@@ -263,8 +260,3 @@ async function initiateStkPush(amount, phoneNumber) {
         throw new Error('Failed to initiate STK Push');
     }
 }
-
-// Start the Express server
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`WhatsApp Bot listening at http://0.0.0.0:${PORT}`);
-});
